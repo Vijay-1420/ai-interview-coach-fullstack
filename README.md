@@ -1,51 +1,78 @@
 # InterviewAI
 
-InterviewAI is a full-stack interview-practice app. Choose guided mock interviews with per-answer feedback or a one-on-one AI chat interviewer with follow-up questions and a full-session review. Enter any job title: question generation is tailored to that role and can cover IT, banking, government/public service exams, healthcare, education, sales, operations, engineering, and other professions. Chat transcripts are saved to the backend database and can be resumed or revisited from **AI Chats**.
+InterviewAI is a full-stack interview-practice app. Choose guided mock interviews with per-answer feedback or a one-on-one AI chat interviewer with follow-up questions and a full-session review. Questions are tailored to the job title and can cover technology, banking, government/public service exams, healthcare, education, sales, operations, engineering, and other professions.
+
+## Features
+
+- Guided interviews with answer-by-answer feedback and session analytics
+- AI chat interviews with follow-up questions, answer validation, saved history, and session reviews
+- Role-aware question generation, with built-in question banks when no AI provider key is configured
+- Optional browser speech input and output for voice interviews
+- Local SQLite storage by default
 
 ## Requirements
 
+- Git
 - Node.js 20.19+ (or 22.12+) and npm
 - Python 3.11+
 
-## Run locally
+## Run locally on Windows
 
-Open **two PowerShell terminals**. Paste the first block into Terminal 1 from any folder; it creates the backend environment if needed, installs its dependencies, then starts the API. It does not rely on PowerShell script activation being enabled:
+Clone this public repository:
 
 ```powershell
-$repo = "C:\Vijay docs\works\ai-interview-coach"
-Set-Location $repo
-if (-not (Test-Path ".\backend\.venv\Scripts\python.exe")) {
-    py -3 -m venv ".\backend\.venv"
-}
-& ".\backend\.venv\Scripts\python.exe" -m pip install -r ".\backend\requirements.txt"
-if ($LASTEXITCODE -ne 0) { throw "Backend dependency installation failed." }
-Set-Location ".\backend"
-& ".\.venv\Scripts\python.exe" -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+git clone https://github.com/Vijay-1420/ai-interview-coach-fullstack.git
+Set-Location ai-interview-coach-fullstack
 ```
 
-Paste the second block into Terminal 2. It installs the locked frontend dependencies and starts Vite:
+Open **two PowerShell terminals** in the cloned project folder.
+
+In Terminal 1, install and start the backend:
 
 ```powershell
-$repo = "C:\Vijay docs\works\ai-interview-coach"
-Set-Location "$repo\frontend"
+py -3 -m venv backend\.venv
+& .\backend\.venv\Scripts\python.exe -m pip install -r .\backend\requirements.txt
+if ($LASTEXITCODE -ne 0) { throw "Backend dependency installation failed." }
+Set-Location .\backend
+& .\.venv\Scripts\python.exe -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
+```
+
+In Terminal 2, install and start the frontend:
+
+```powershell
+Set-Location .\frontend
 npm ci
 if ($LASTEXITCODE -ne 0) { throw "Frontend dependency installation failed." }
 npm run dev -- --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:5173`. Keep both terminals open while using the app; press **Ctrl+C** in each terminal to stop its server. Vite proxies `/api` requests to the backend on port 8000.
+Open <http://127.0.0.1:5173>. Keep both terminals open while using the app. Press **Ctrl+C** in each terminal to stop its server. The Vite development server proxies `/api` requests to the backend on port 8000.
 
-The backend works without an AI key using built-in interview questions, conversational replies, and local estimated scoring. To enable AI-generated questions, conversational follow-ups, fact-aware answer evaluation, and detailed interview reviews, set `OPENAI_API_KEY` in `backend/.env` using `backend/.env.example` as a template. Never commit the `.env` file. Without a key, scores use relevance and answer-detail heuristics only, cannot verify professional facts, and are capped at 8/10 to avoid implying a fact-check.
+## AI configuration
 
-Guided practice and chat reviews use a calibrated 1-10 rubric for relevance, accuracy, reasoning, and evidence. AI scoring uses the role, seniority, job description, question, and answer; feedback calls out answer-specific strengths and corrections. Chat interviews start in text mode. Answers are checked against the current question; off-topic or too-short answers are not saved and the interviewer asks you to try the same question again. With `OPENAI_API_KEY`, the AI also checks role relevance and factual correctness for knowledge questions. Without a key, local fallback scores are estimates based on relevance and answer detail, not fact-checks. Optional voice mode speaks the interviewer questions and listens for your answer, then speaks the next response and listens again. It offers a gentle male/female voice preference using the voices available in your browser; exact voice choices depend on your operating system and browser. Microphone support may require permission. Text chat remains available if voice input is unsupported or denied. AI-generated role questions and dynamic follow-ups require `OPENAI_API_KEY`; role-aware, varied question banks provide a fallback without it. By default, interview data is stored in `backend/interview.db`; set `DATABASE_URL` to use another supported database.
+The app works without an API key using built-in interview questions, conversational replies, and local estimated scoring. For AI-generated questions, conversational follow-ups, and more detailed answer evaluation, create `backend/.env` from the example:
+
+```powershell
+Copy-Item .\backend\.env.example .\backend\.env
+```
+
+Replace the placeholder with your own `OPENAI_API_KEY` in `backend/.env`, then start or restart the backend. Never commit or share this file. AI requests send interview questions and answers to the configured provider; avoid entering sensitive personal or confidential information.
+
+Without an AI key, scores are estimates based on relevance and answer detail. They cannot verify professional facts and are capped at 8/10. Optional voice mode uses the voices and speech recognition supported by the current browser and operating system; microphone permission may be required.
+
+## Data and deployment
+
+By default, interview data is stored in `backend/interview.db` on the machine running the backend. Configure `DATABASE_URL` in the backend environment to use another supported database. This project does not provide authentication or user isolation, so do not expose a local or self-hosted instance to the public internet with real user data without adding appropriate security controls.
 
 For a split-origin deployment, set `VITE_API_URL` to the backend API URL ending in `/api`, and set `FRONTEND_ORIGINS` on the backend to a comma-separated list of allowed frontend origins. Local development uses the Vite proxy and localhost CORS defaults.
 
+The backend API documentation is available at <http://127.0.0.1:8000/docs>, and its health check is at <http://127.0.0.1:8000/health>.
+
 ## Useful commands
+
+Run from the project root:
 
 ```powershell
 npm --prefix frontend run build
 npm --prefix frontend run lint
 ```
-
-The backend exposes its interactive API documentation at `http://localhost:8000/docs` and a health check at `http://localhost:8000/health`.
